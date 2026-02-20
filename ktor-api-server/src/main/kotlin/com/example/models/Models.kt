@@ -41,3 +41,16 @@ data class ApiResponse<T>(
     val message: String = "",
     val count: Int? = null
 )
+
+/**
+ * Standardized response wrapper for all API responses.
+ * Ensures consistent response format across all endpoints.
+ */
+@Serializable
+data class ResponseWrapper<T>(
+    val success: Boolean,
+    val data: T? = null,
+    val message: String = "",
+    val errors: List<String>? = null,
+    val timestamp: String = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+)
