@@ -1,6 +1,8 @@
 package com.example.exception
 
 import com.example.dto.ApiResponse
+import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.FieldError
@@ -13,14 +15,17 @@ import java.time.LocalDateTime
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     @ExceptionHandler(ResourceNotFoundException::class)
     fun handleResourceNotFoundException(
         ex: ResourceNotFoundException,
         request: WebRequest
     ): ResponseEntity<ApiResponse<Any>> {
+        logger.warn("Resource not found: {}", ex.message)
         val response = ApiResponse<Any>(
             success = false,
-            message = ex.message,
+            message = ex.message ?: "Resource not found",
             timestamp = LocalDateTime.now()
         )
         return ResponseEntity(response, HttpStatus.NOT_FOUND)
@@ -31,9 +36,10 @@ class GlobalExceptionHandler {
         ex: ValidationException,
         request: WebRequest
     ): ResponseEntity<ApiResponse<Any>> {
+        logger.warn("Validation error: {}", ex.message)
         val response = ApiResponse<Any>(
             success = false,
-            message = ex.message,
+            message = ex.message ?: "Validation failed",
             timestamp = LocalDateTime.now()
         )
         return ResponseEntity(response, HttpStatus.BAD_REQUEST)
@@ -44,9 +50,24 @@ class GlobalExceptionHandler {
         ex: DuplicateResourceException,
         request: WebRequest
     ): ResponseEntity<ApiResponse<Any>> {
+        logger.warn("Duplicate resource: {}", ex.message)
         val response = ApiResponse<Any>(
             success = false,
-            message = ex.message,
+            message = ex.message ?: "Resource already exists",
+            timestamp = LocalDateTime.now()
+        )
+        return ResponseEntity(response, HttpStatus.CONFLICT)
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(
+        ex: DataIntegrityViolationException,
+        request: WebRequest
+    ): ResponseEntity<ApiResponse<Any>> {
+        logger.error("Data integrity violation occurred", ex)
+        val response = ApiResponse<Any>(
+            success = false,
+            message = "Operation failed due to data constraint violation",
             timestamp = LocalDateTime.now()
         )
         return ResponseEntity(response, HttpStatus.CONFLICT)
@@ -57,6 +78,7 @@ class GlobalExceptionHandler {
         ex: MethodArgumentNotValidException,
         request: WebRequest
     ): ResponseEntity<ApiResponse<Any>> {
+        logger.warn("Validation failed for request")
         val errors = ex.bindingResult.allErrors.map { error ->
             if (error is FieldError) {
                 "${error.field}: ${error.defaultMessage}"
@@ -79,9 +101,10 @@ class GlobalExceptionHandler {
         ex: Exception,
         request: WebRequest
     ): ResponseEntity<ApiResponse<Any>> {
+        logger.error("Unexpected error occurred", ex)
         val response = ApiResponse<Any>(
             success = false,
-            message = "Internal server error: ${ex.message}",
+            message = "Internal server error",
             timestamp = LocalDateTime.now()
         )
         return ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR)

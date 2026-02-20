@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -20,6 +21,8 @@ import java.time.LocalDateTime
 @RequestMapping("/api/v1/users")
 @Tag(name = "Users", description = "User management endpoints")
 class UserController(private val userService: UserService) {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     @GetMapping
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
@@ -32,6 +35,7 @@ class UserController(private val userService: UserService) {
         ]
     )
     fun getAllUsers(): ResponseEntity<ApiResponse<List<UserResponse>>> {
+        logger.info("GET /api/v1/users - Fetching all users")
         val users = userService.getAllUsers()
         return ResponseEntity.ok(
             ApiResponse(
@@ -57,6 +61,7 @@ class UserController(private val userService: UserService) {
         ]
     )
     fun getUserById(@PathVariable id: Long): ResponseEntity<ApiResponse<UserResponse>> {
+        logger.info("GET /api/v1/users/{} - Fetching user by ID", id)
         val user = userService.getUserById(id)
         return ResponseEntity.ok(
             ApiResponse(
@@ -86,6 +91,7 @@ class UserController(private val userService: UserService) {
         ]
     )
     fun createUser(@Valid @RequestBody request: CreateUserRequest): ResponseEntity<ApiResponse<UserResponse>> {
+        logger.info("POST /api/v1/users - Creating user with email: {}", request.email)
         val user = userService.createUser(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(
             ApiResponse(
@@ -119,6 +125,7 @@ class UserController(private val userService: UserService) {
         @PathVariable id: Long,
         @Valid @RequestBody request: UpdateUserRequest
     ): ResponseEntity<ApiResponse<UserResponse>> {
+        logger.info("PUT /api/v1/users/{} - Updating user", id)
         val user = userService.updateUser(id, request)
         return ResponseEntity.ok(
             ApiResponse(
@@ -145,6 +152,7 @@ class UserController(private val userService: UserService) {
         ]
     )
     fun deleteUser(@PathVariable id: Long): ResponseEntity<Void> {
+        logger.info("DELETE /api/v1/users/{} - Deleting user", id)
         userService.deleteUser(id)
         return ResponseEntity.noContent().build()
     }
@@ -152,6 +160,7 @@ class UserController(private val userService: UserService) {
     @GetMapping("/health")
     @Operation(summary = "Health check", description = "Check if the service is up and running")
     fun healthCheck(): ResponseEntity<ApiResponse<String>> {
+        logger.debug("GET /api/v1/users/health - Health check")
         return ResponseEntity.ok(
             ApiResponse(
                 success = true,
