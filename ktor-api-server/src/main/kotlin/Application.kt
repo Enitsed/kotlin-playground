@@ -19,6 +19,11 @@ fun main() {
     }.start(wait = true)
 }
 
+/**
+ * Configures routing for the application.
+ * API is versioned under /api/v1 to support future versions.
+ * All endpoints follow RESTful conventions with proper HTTP status codes.
+ */
 fun Application.configureRouting() {
     routing {
         rootRoute()
