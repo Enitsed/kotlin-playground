@@ -11,34 +11,44 @@
 ```
 kotlin-example/
 ├── ktor-api-server/              # Lightweight async framework (Ktor 2.3.6)
-│   ├── src/main/kotlin/Application.kt       # Single-file app (~300 lines)
+│   ├── src/main/kotlin/
+│   │   ├── Application.kt                    # Entry point (main, routing, plugin setup)
+│   │   └── com/example/
+│   │       ├── models/Models.kt              # @Serializable data classes (User, DTOs)
+│   │       ├── services/UserService.kt       # Business logic (CRUD operations)
+│   │       ├── routes/UserRoutes.kt          # HTTP route handlers (GET, POST, PUT, DELETE)
+│   │       └── plugins/ContentNegotiation.kt # JSON serialization plugin
 │   ├── build.gradle.kts
 │   └── Dockerfile
 │
 ├── spring-boot-api-server/       # Enterprise framework (Spring Boot 3.1.7)
 │   ├── src/main/kotlin/com/example/
-│   │   ├── controller/UserController.kt     # REST endpoints
-│   │   ├── service/UserService.kt           # Business logic
-│   │   ├── repository/UserRepository.kt     # Data access (JPA)
-│   │   ├── entity/User.kt                   # JPA entity
-│   │   ├── dto/UserDTO.kt                   # Request/response DTOs
-│   │   └── exception/GlobalExceptionHandler.kt
+│   │   ├── Application.kt                    # Spring Boot main class
+│   │   ├── controller/UserController.kt      # REST endpoints (@RestController)
+│   │   ├── service/UserService.kt            # Business logic (@Service)
+│   │   ├── repository/UserRepository.kt      # Data access (Spring Data JPA)
+│   │   ├── entity/User.kt                    # JPA entity (@Entity)
+│   │   ├── dto/UserDTO.kt                    # Request/response DTOs
+│   │   ├── exception/CustomExceptions.kt     # Custom exception classes
+│   │   ├── exception/GlobalExceptionHandler.kt # Global error handler (@RestControllerAdvice)
+│   │   └── config/                           # Spring configuration (optional)
 │   ├── src/main/resources/
-│   │   ├── application.yaml     # Default config
-│   │   ├── application-dev.yaml # Dev with SQL logging
-│   │   └── application-prod.yaml
+│   │   ├── application.yaml                  # Default config
+│   │   ├── application-dev.yaml              # Dev with SQL logging
+│   │   └── application-prod.yaml             # Prod with minimal logging
 │   ├── build.gradle.kts
-│   ├── docker-compose.yml       # MySQL
+│   ├── docker-compose.yml
 │   └── Dockerfile
 │
 └── Documentation
-    ├── README.md                 # Project overview
+    ├── AGENTS.md                 # Root project knowledge base
+    ├── README.md                 # Project overview + learning path
     ├── GETTING_STARTED.md
     ├── SPRING_BOOT_KOTLIN_GUIDE.md
     └── FRAMEWORK_COMPARISON.md
 ```
 
-Both projects implement **identical Users REST API** for comparison purposes.
+Both projects implement **identical Users REST API** for direct framework comparison. Choose your learning path:
 
 ---
 
@@ -314,7 +324,13 @@ data class CreateUserRequest(
 
 ### Ktor Specific
 
-**Request/Response**:
+**Architecture Pattern**: Modular plugin-based with separate concerns
+- **Models** (`models/Models.kt`): `@Serializable` DTOs
+- **Services** (`services/UserService.kt`): Business logic (CRUD, data management)
+- **Routes** (`routes/UserRoutes.kt`): HTTP handlers, validation, route composition
+- **Plugins** (`plugins/ContentNegotiation.kt`, etc.): Infrastructure setup
+
+**Request/Response** with `call.receive<T>()` and `call.respond()`:
 ```kotlin
 @Serializable
 data class CreateUserRequest(
@@ -326,8 +342,28 @@ data class CreateUserRequest(
 // In route handler
 post("/users") {
     val request = call.receive<CreateUserRequest>()
-    val user = userStore.createUser(request)
-    call.respond(HttpStatusCode.Created, user)
+    val user = userService.createUser(request)
+    call.respond(HttpStatusCode.Created, mapOf("success" to true, "data" to user))
+}
+```
+
+**Routing Composition** with extension functions:
+```kotlin
+fun Application.configureRouting() {
+    routing {
+        rootRoute()
+        route("/api/v1") {
+            userRoutes(userService)
+            healthRoutes()
+        }
+    }
+}
+
+fun Route.userRoutes(userService: UserService) {
+    route("/users") {
+        get { /* implementation */ }
+        post { /* implementation */ }
+    }
 }
 ```
 
