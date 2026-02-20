@@ -31,7 +31,10 @@ dependencies {
 
     // Testing
     testImplementation("io.ktor:ktor-server-tests:2.3.6")
-    testImplementation("kotlin.test:kotlin.test-junit:1.9.21")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.9.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.21")
 }
 
 kotlin {
@@ -40,4 +43,8 @@ kotlin {
 
 tasks.named<JavaExec>("run") {
     standardInput = System.`in`
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
