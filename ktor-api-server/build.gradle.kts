@@ -44,6 +44,15 @@ kotlin {
 
 tasks.named<JavaExec>("run") {
     standardInput = System.`in`
+
+    // Set environment based on project property or KTOR_ENV env var
+    val env = project.findProperty("env")?.toString() ?: System.getenv("KTOR_ENV") ?: "dev"
+    environment("KTOR_ENV", env)
+
+    // Allow passing environment from command line: ./gradlew run -Penv=prod
+    doFirst {
+        println("Running Ktor with environment: $env")
+    }
 }
 
 tasks.test {
